@@ -15,7 +15,7 @@ class RuleBasedAnalyzerTests(unittest.TestCase):
 
         self.assertTrue(result.is_toxic)
         self.assertEqual(result.confidence, 1.0)
-        self.assertIn("дебил", result.reason)
+        self.assertEqual(result.reason, "Matched blacklist")
 
     def test_rule_based_analyzer_returns_non_toxic_when_no_match(self) -> None:
         analyzer = RuleBasedAnalyzer(["дебил"])

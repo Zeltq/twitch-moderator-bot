@@ -24,7 +24,7 @@ class RuleBasedAnalyzer(Analyzer):
             return AnalysisResult(
                 is_toxic=True,
                 confidence=1.0,
-                reason=f"Matched blacklist: {', '.join(matches)}",
+                reason="Matched blacklist",
             )
 
         return AnalysisResult(
@@ -36,4 +36,3 @@ class RuleBasedAnalyzer(Analyzer):
 
 def _normalize_text(value: str) -> str:
     return re.sub(r"\s+", " ", value.casefold()).strip()
-
