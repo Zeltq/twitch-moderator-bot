@@ -10,6 +10,12 @@ DEFAULT_TIMEOUT_DURATION = 600
 DEFAULT_IRC_HOST = "irc.chat.twitch.tv"
 DEFAULT_IRC_PORT = 6697
 DEFAULT_ANALYZER_TYPE = "rule_based"
+DEFAULT_STREAMER_THRESHOLD = 0.5
+DEFAULT_CHATTER_THRESHOLD = 0.6
+DEFAULT_NONE_THRESHOLD = 0.85
+DEFAULT_MIN_CONFIDENCE = 0.0
+DEFAULT_LLM_TIMEOUT_SECONDS = 5
+DEFAULT_LLM_RETRY_COUNT = 0
 
 
 @dataclass(frozen=True)
@@ -23,6 +29,20 @@ class AppConfig:
     irc_host: str = DEFAULT_IRC_HOST
     irc_port: int = DEFAULT_IRC_PORT
     blacklist: tuple[str, ...] = ()
+    streamer_threshold: float = DEFAULT_STREAMER_THRESHOLD
+    chatter_threshold: float = DEFAULT_CHATTER_THRESHOLD
+    none_threshold: float = DEFAULT_NONE_THRESHOLD
+    min_confidence: float = DEFAULT_MIN_CONFIDENCE
+    llm_timeout_seconds: int = DEFAULT_LLM_TIMEOUT_SECONDS
+    llm_retry_count: int = DEFAULT_LLM_RETRY_COUNT
+
+    def __post_init__(self) -> None:
+        _validate_score("streamer_threshold", self.streamer_threshold)
+        _validate_score("chatter_threshold", self.chatter_threshold)
+        _validate_score("none_threshold", self.none_threshold)
+        _validate_score("min_confidence", self.min_confidence)
+        _validate_non_negative("llm_timeout_seconds", self.llm_timeout_seconds)
+        _validate_non_negative("llm_retry_count", self.llm_retry_count)
 
     @property
     def normalized_channel(self) -> str:
@@ -59,6 +79,12 @@ def load_config(dotenv_path: str | Path = ".env") -> AppConfig:
     irc_host = os.getenv("TWITCH_IRC_HOST", DEFAULT_IRC_HOST).strip()
     irc_port = int(os.getenv("TWITCH_IRC_PORT", DEFAULT_IRC_PORT))
     blacklist = _parse_csv_env("BLACKLIST")
+    streamer_threshold = float(os.getenv("STREAMER_THRESHOLD", DEFAULT_STREAMER_THRESHOLD))
+    chatter_threshold = float(os.getenv("CHATTER_THRESHOLD", DEFAULT_CHATTER_THRESHOLD))
+    none_threshold = float(os.getenv("NONE_THRESHOLD", DEFAULT_NONE_THRESHOLD))
+    min_confidence = float(os.getenv("MIN_CONFIDENCE", DEFAULT_MIN_CONFIDENCE))
+    llm_timeout_seconds = int(os.getenv("LLM_TIMEOUT_SECONDS", DEFAULT_LLM_TIMEOUT_SECONDS))
+    llm_retry_count = int(os.getenv("LLM_RETRY_COUNT", DEFAULT_LLM_RETRY_COUNT))
 
     return AppConfig(
         channel=channel,
@@ -70,6 +96,12 @@ def load_config(dotenv_path: str | Path = ".env") -> AppConfig:
         irc_host=irc_host,
         irc_port=irc_port,
         blacklist=blacklist,
+        streamer_threshold=streamer_threshold,
+        chatter_threshold=chatter_threshold,
+        none_threshold=none_threshold,
+        min_confidence=min_confidence,
+        llm_timeout_seconds=llm_timeout_seconds,
+        llm_retry_count=llm_retry_count,
     )
 
 
@@ -89,3 +121,12 @@ def _parse_csv_env(name: str) -> tuple[str, ...]:
     parts = [part.strip() for part in raw_value.split(",")]
     return tuple(part for part in parts if part)
 
+
+def _validate_score(name: str, value: float) -> None:
+    if not 0.0 <= value <= 1.0:
+        raise ValueError(f"{name} must be between 0.0 and 1.0")
+
+
+def _validate_non_negative(name: str, value: int) -> None:
+    if value < 0:
+        raise ValueError(f"{name} must be non-negative")

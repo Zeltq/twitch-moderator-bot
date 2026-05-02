@@ -22,6 +22,7 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+logs/
 
 # IDE and OS files
 .idea/
@@ -31,3 +32,4 @@ Thumbs.db
 
 PLAN_FULL.md
 PLAN_MVP.md
+STEPS.md
